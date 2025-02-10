@@ -1,0 +1,81 @@
+# SPDX-FileCopyrightText: (c) 2025 Xronos Inc.
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Docker network create sorasvl
+  community.general.docker_network:
+    name: sorasvl
+
+- name: Docker volume create sorasvl-mongo-data
+  community.docker.docker_volume:
+    name: sorasvl-mongo-data
+
+- name: Docker pull SORA-SVL images version {{_sora_svl_version_tag }} (10+ GB)
+  community.docker.docker_image:
+    name: densosvic/{{ item }}
+    tag: "{{_sora_svl_version_tag }}"
+    source: pull
+    state: present
+  with_items:
+    - sora-svl-server
+    - sora-svl-client
+    - sora-svl-mongo
+    - sora-svl-router
+    - sora-svl-docs
+
+- name: Docker container run sorasvl-mongo
+  community.docker.docker_container:
+    name: sorasvl-mongo
+    image: densosvic/sora-svl-mongo:{{ _sora_svl_version_tag }}
+    volumes:
+      - sorasvl-mongo-data:/data/db
+    ports:
+      - 28018:27017
+    networks:
+      - name: sorasvl
+    comparisons:
+      '*': strict
+    restart_policy: unless-stopped
+
+- name: Docker container run sorasvl-server
+  community.docker.docker_container:
+    name: sorasvl-server
+    image: densosvic/sora-svl-server:{{ _sora_svl_version_tag }}
+    networks:
+      - name: sorasvl
+    comparisons:
+      '*': strict
+    restart_policy: unless-stopped
+
+- name: Docker container run sorasvl-client
+  community.docker.docker_container:
+    name: sorasvl-client
+    image: densosvic/sora-svl-client:{{ _sora_svl_version_tag }}
+    networks:
+      - name: sorasvl
+    comparisons:
+      '*': strict
+    restart_policy: unless-stopped
+
+- name: Docker container run sorasvl-router
+  community.docker.docker_container:
+    name: sorasvl-router
+    image: densosvic/sora-svl-router:{{ _sora_svl_version_tag }}
+    ports:
+      - 8080:80
+    networks:
+      - name: sorasvl
+    comparisons:
+      '*': strict
+    restart_policy: unless-stopped
+
+- name: Docker container run sorasvl-docs
+  community.docker.docker_container:
+    name: sorasvl-docs
+    image: densosvic/sora-svl-docs:{{ _sora_svl_version_tag }}
+    ports:
+      - 8081:8081
+    networks:
+      - name: sorasvl
+    comparisons:
+      '*': strict
+    restart_policy: unless-stopped

@@ -1,0 +1,4 @@
+# SPDX-FileCopyrightText: (c) 2025 Xronos Inc.
+# SPDX-License-Identifier: BSD-3-Clause
+---
+_sora_svl_version_tag: "{{ ('v' ~ sora_svl_version) if sora_svl_version else '' }}"
